@@ -1,0 +1,14 @@
+{
+  "name": "xxtime/support",
+  "type": "library",
+  "description": "support",
+  "homepage": "https://github.com/xxtime/support",
+  "require": {
+    "php": ">=5.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "Xxtime\\Support\\": "src/"
+    }
+  }
+}
