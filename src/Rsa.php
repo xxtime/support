@@ -48,20 +48,6 @@ class Rsa
     }
 
 
-    public function setPublicKeyPath($path = '', $bit = 1024)
-    {
-        $this->_publicKey = file_get_contents($path);
-        $this->setLength($bit);
-    }
-
-
-    public function setPrivateKeyPath($path = '', $bit = 1024)
-    {
-        $this->_privateKey = file_get_contents($path);
-        $this->setLength($bit);
-    }
-
-
     /**
      * 加密
      * bin2hex 转16进制
