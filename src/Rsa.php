@@ -8,6 +8,8 @@
 namespace Xxtime\Support;
 
 
+use Exception;
+
 class Rsa
 {
 
@@ -32,19 +34,25 @@ class Rsa
 
     public function setPublicKey($keyString = '', $bit = 1024)
     {
-        $this->_publicKey = "-----BEGIN PUBLIC KEY-----\n" .
-            chunk_split($keyString, 64, "\n") .
-            '-----END PUBLIC KEY-----';
+        //$this->_publicKey = "-----BEGIN PUBLIC KEY-----\n" . chunk_split($keyString, 64, "\n") . '-----END PUBLIC KEY-----';
         $this->setLength($bit);
+        $this->_publicKey = openssl_get_publickey($keyString);
+        if ($this->_publicKey === false) {
+            throw new Exception(openssl_error_string());
+        }
+        return true;
     }
 
 
     public function setPrivateKey($keyString = '', $bit = 1024)
     {
-        $this->_privateKey = "-----BEGIN PRIVATE KEY-----\n" .
-            chunk_split($keyString, 64, "\n") .
-            '-----END PRIVATE KEY-----';
+        //$this->_privateKey = "-----BEGIN PRIVATE KEY-----\n" . chunk_split($keyString, 64, "\n") . '-----END PRIVATE KEY-----';
         $this->setLength($bit);
+        $this->_privateKey = openssl_get_privatekey($keyString);
+        if ($this->_privateKey === false) {
+            throw new Exception(openssl_error_string());
+        }
+        return true;
     }
 
 
@@ -57,14 +65,10 @@ class Rsa
      */
     public function encrypt($plaintext = '')
     {
-        if (!$this->_publicKey) {
-            return false;
-        }
-        $keyResource = openssl_get_publickey($this->_publicKey);
         $plaintext = str_split($plaintext, $this->_maxLength);
         $result = '';
         foreach ($plaintext as $block) {
-            openssl_public_encrypt($block, $encrypted, $keyResource);
+            openssl_public_encrypt($block, $encrypted, $this->_publicKey);
             $result .= $encrypted;
         }
         return $result;
@@ -78,14 +82,10 @@ class Rsa
      */
     public function decrypt($data = '')
     {
-        if (!$this->_privateKey) {
-            return false;
-        }
-        $keyResource = openssl_get_privatekey($this->_privateKey);
         $data = str_split($data, $this->_blockLength);
         $result = '';
         foreach ($data as $block) {
-            openssl_private_decrypt($block, $decrypted, $keyResource);
+            openssl_private_decrypt($block, $decrypted, $this->_privateKey);
             $result .= $decrypted;
         }
         return $result;
@@ -100,8 +100,7 @@ class Rsa
      */
     public function signature($data = '', $alg = OPENSSL_ALGO_SHA1)
     {
-        $keyResource = openssl_get_privatekey($this->_privateKey);
-        openssl_sign($data, $signature, $keyResource, $alg);
+        openssl_sign($data, $signature, $this->_privateKey, $alg);
         return $signature;
     }
 
@@ -115,8 +114,7 @@ class Rsa
      */
     public function verifySign($data = '', $signature = '', $alg = OPENSSL_ALGO_SHA1)
     {
-        $keyResource = openssl_get_publickey($this->_publicKey);
-        $verified = openssl_verify($data, $signature, $keyResource, $alg);
+        $verified = openssl_verify($data, $signature, $this->_publicKey, $alg);
         if ($verified != 1) {
             return false;
         }
